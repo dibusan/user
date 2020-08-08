@@ -1,0 +1,718 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+components:
+  securitySchemes:
+    bearer_auth:
+      type: http
+      scheme: bearer
+  schemas:
+    resource_creation_success:
+      type: object
+      properties:
+        success:
+          type: boolean
+        newId:
+          type: integer
+    resource_creation_failure:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messages:
+          type: array
+          items:
+            type: string
+    registration_success:
+      type: object
+      properties:
+        success:
+          type: boolean
+        newUserId:
+          type: integer
+    registration_failure:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messages:
+          type: array
+          items:
+            type: string
+    get_user_reservations:
+      type: object
+      properties:
+        success:
+          type: boolean
+        reservations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              start_date:
+                type: datetime
+              end_date:
+                type: datetime
+              size:
+                type: integer
+              reservation_type:
+                type: string
+                enum:
+                - lesson
+                - play
+              user_id:
+                type: integer
+                description: ALERT! This is deprecated, will be removed soon. Use
+                  reservations[0].user.id instead
+              user:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+              coach_id:
+                type: integer
+              coach:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+              club_id:
+                type: integer
+              club:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+            required:
+            - id
+            - start_date
+            - end_date
+            - size
+            - reservation_type
+            - user_id
+            - user
+            - club
+      required:
+      - success
+      - reservations
+paths:
+  "/authenticate":
+    post:
+      summary: Create user token
+      tags:
+      - Authentication
+      parameters: []
+      responses:
+        '200':
+          description: Get a token for user authentication
+          content: {}
+        '401':
+          description: Authorization failed with bad credentials
+          content: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+  "/quickauth/user1":
+    get:
+      summary: Get User token
+      tags:
+      - QuickAuth
+      responses:
+        '401':
+          description: Get user token
+          content: {}
+  "/quickauth/club1":
+    get:
+      summary: Get User token
+      tags:
+      - QuickAuth
+      responses:
+        '401':
+          description: Get club token
+          content: {}
+  "/current_user/reservations":
+    get:
+      summary: Get all reservations for this User
+      tags:
+      - Reservations
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: Reservations listed successfully for current user
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/get_user_reservations"
+  "/current_user/reservations/batch":
+    post:
+      summary: Create multiple reservations at once
+      tags:
+      - Reservations
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '201':
+          description: Create Reservations batch from club to club.
+          content: {}
+        '422':
+          description: Fail Create Reservations with bad data
+          content: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reservations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      club_id:
+                        type: integer
+                      start_date:
+                        type: string
+                        format: datetime
+                      end_date:
+                        type: string
+                        format: datetime
+                      size:
+                        type: integer
+                        enum:
+                        - 1
+                        - 2
+                        - 3
+                        - 4
+                        - 5
+                      reservation_type:
+                        type: string
+                        enum:
+                        - lesson
+                        - play
+                      coach:
+                        type: string
+                        enum:
+                        - Jordan
+                        - Krishna
+                        - Xi
+                    required:
+                    - start_date
+                    - end_date
+                    - password
+                    - reservation_type
+              required:
+              - reservations
+  "/current_user/reservations/{id}":
+    put:
+      summary: Update Reservation
+      tags:
+      - Reservations
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Reservation updated successfully with valid parameters
+          content: {}
+        '404':
+          description: Reservation fails update when it does not exist
+          content: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: datetime
+                end_date:
+                  type: string
+                  format: datetime
+                size:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 5
+                reservation_type:
+                  type: string
+                  enum:
+                  - lesson
+                  - play
+                coach:
+                  type: string
+                  enum:
+                  - Jordan
+                  - Krishna
+                  - Xi
+              required:
+              - start_date
+              - end_date
+              - password
+              - reservation_type
+    delete:
+      summary: Deletes Reservation
+      tags:
+      - Reservations
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Delete Reservation successfully
+          content: {}
+  "/reservations":
+    get:
+      summary: Filter reservations
+      tags:
+      - Reservations
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: club_id
+        in: query
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Reservations listed successfully with filter
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/get_user_reservations"
+  "/current_user/scheduleConfigs":
+    get:
+      summary: Get the Schedule Config for the current user
+      tags:
+      - Schedule Configurations
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: Schedule Config retrieved successfully
+          content: {}
+    post:
+      summary: Creates New Config
+      tags:
+      - Schedule Configurations
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '201':
+          description: Schedule created successfully
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/resource_creation_success"
+        '422':
+          description: Schedule failed to create with missing data
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/resource_creation_failure"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                interval_size_in_minutes:
+                  type: integer
+                day_start_time:
+                  type: string
+                  format: datetime
+                day_end_time:
+                  type: string
+                  format: datetime
+                availability_per_interval:
+                  type: integer
+                price_per_participant:
+                  type: integer
+              required:
+              - interval_size_in_minutes
+              - day_start_time
+              - day_end_time
+              - availability_per_interval
+              - price_per_participant
+    put:
+      summary: Edit existing Config
+      tags:
+      - Schedule Configurations
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '204':
+          description: Update all Config fields successfully
+          content: {}
+        '404':
+          description: Update Config fails when current user does not have a config
+          content: {}
+        '422':
+          description: Update Config fails when params have wrong format
+          content: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                interval_size_in_minutes:
+                  type: integer
+                day_start_time:
+                  type: string
+                  format: datetime
+                day_end_time:
+                  type: string
+                  format: datetime
+                availability_per_interval:
+                  type: integer
+                price_per_participant:
+                  type: integer
+  "/current_user/scheduleExceptions":
+    post:
+      summary: Creates New Schedule Exception
+      tags:
+      - Schedule Exception
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '201':
+          description: Schedule Exception created successfully
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/resource_creation_success"
+        '404':
+          description: Schedule Exception creation failed when user does not have
+            a Schedule
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/resource_creation_failure"
+        '422':
+          description: Schedule Exception creation failed when data is invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/resource_creation_failure"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_time:
+                  type: string
+                  format: datetime
+                  description: 'DateTime string for the exception to activate for
+                    users. Example format: "2011-05-19 10:30:14"'
+                end_time:
+                  type: string
+                  format: datetime
+                  description: 'DateTime string for the exception to expire. Example
+                    format: "2011-05-19 10:30:14"'
+                all_day:
+                  type: boolean
+                  description: If true, will apply for all days from start_time to
+                    end_time (both inclusive).
+                exception_type:
+                  type: string
+                  enum:
+                  - block_interval
+                  - modify_interval_availability
+                  - modify_day_start_time
+                  - modify_day_end_time
+                  - modify_price_per_person
+                  description: |-
+                    Exceptions can only be for specific developer predetermined purposes,
+                                    the type will reflect that purpose. For more exception_type info, use "GET /static/exception_types"
+                price_per_participant:
+                  type: integer
+                  description: Only required when exception_type is "modify_price_per_person"
+                availability_per_interval:
+                  type: integer
+                  description: Only required when exception_type is "modify_interval_availability"
+              required:
+              - start_time
+              - end_time
+              - exception_type
+  "/current_user/scheduleExceptions/{id}":
+    put:
+      summary: Edit existing Schedule Exception for the current user
+      tags:
+      - Schedule Exception
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Schedule Exception all fields updated successfully
+          content: {}
+        '404':
+          description: Schedule Exception fails to update when id is invalid
+          content: {}
+        '422':
+          description: Schedule Exception fails to update when fields are invalid
+          content: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_time:
+                  type: string
+                  format: datetime
+                  description: 'DateTime string for the exception to activate for
+                    users. Example format: "2011-05-19 10:30:14"'
+                end_time:
+                  type: string
+                  format: datetime
+                  description: 'DateTime string for the exception to expire. Example
+                    format: "2011-05-19 10:30:14"'
+                all_day:
+                  type: boolean
+                  description: If true, will apply for all days from start_time to
+                    end_time (both inclusive).
+                exception_type:
+                  type: string
+                  enum:
+                  - block_interval
+                  - modify_interval_availability
+                  - modify_day_start_time
+                  - modify_day_end_time
+                  - modify_price_per_person
+                  description: |-
+                    Exceptions can only be for specific developer predetermined purposes,
+                                    the type will reflect that purpose. For more exception_type info, use "GET /static/exception_types"
+                price_per_participant:
+                  type: integer
+                  description: Only required when exception_type is "modify_price_per_person"
+                availability_per_interval:
+                  type: integer
+                  description: Only required when exception_type is "modify_interval_availability"
+    delete:
+      summary: Delete existing Schedule Exception for the current user
+      tags:
+      - Schedule Exception
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Schedule Exception Delete successfully
+          content: {}
+        '404':
+          description: Schedule Exception fails to Delete when id is invalid
+          content: {}
+  "/users/register":
+    post:
+      summary: Creates New User
+      tags:
+      - Users
+      parameters: []
+      responses:
+        '201':
+          description: User created successfully with parent_id
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/registration_success"
+        '409':
+          description: User creation failed with invalid email
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/registration_failure"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                password_confirmation:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                  - club
+                  - coach
+                  - guest
+                parent_id:
+                  type: integer
+              required:
+              - name
+              - email
+              - password
+              - password_confirmation
+  "/users/current_user_profile":
+    get:
+      summary: Gets User information
+      tags:
+      - Users
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: User retrieve profile
+          content: {}
+  "/users/current_user":
+    get:
+      summary: Gets Current User information
+      tags:
+      - Users
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: User retrieve profile
+          content: {}
+  "/users/current_user/link_stripe_acc":
+    put:
+      summary: Adds Stripe Account Token to Current User
+      tags:
+      - Users
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: stripe_acc_id
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Linked Stripe Account to User
+          content: {}
+  "/users/{id}":
+    get:
+      summary: Get User by ID
+      tags:
+      - Users
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content: {}
+    put:
+      summary: Edits existing User
+      tags:
+      - Users
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Update all User fields successfully
+          content: {}
+        '404':
+          description: Update fails with non-existent user id
+          content: {}
+        '422':
+          description: Failed edit when no params passed
+          content: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                parent_id:
+                  type: integer
+    delete:
+      summary: Deletes existing User
+      tags:
+      - Users
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '204':
+          description: Delete User successfully
+          content: {}
+        '404':
+          description: Delete User fails when user does not exist
+          content: {}
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
+- url: https://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
+- url: https://nameless-spire-32644.herokuapp.com/
