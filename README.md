@@ -1,6 +1,6 @@
 Overview (TODO)
 ---
-
+This is a User management microservice I use a Utility in multiple projects. It allows to create and authenticate users with roles.
 
 How to Run
 ---
